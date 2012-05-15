@@ -1,0 +1,12 @@
+# README
+
+Simple gui for running delayed audio feedback experiments. Requires the
+following packages:
+
+- portaudio
+- python2.x
+- pygtk
+- pyaudio
+
+Still pretty primitive, need to add config files etc.
+
