@@ -5,6 +5,7 @@ import wave
 from collections import deque
 import gtk
 import csv
+import random
 
 # Constants
 chunk = 100 
@@ -12,6 +13,7 @@ p = pyaudio.PyAudio()
 
 # Program
 class DelayApp(gtk.Window):
+
   def __init__(self):
     super(DelayApp, self).__init__()
     self.set_title("Delay Experiment")
@@ -26,6 +28,12 @@ class DelayApp(gtk.Window):
     self.stopRecBtn.connect("clicked", self.stopRec)
     self.startRecBtn = gtk.Button("Record New Test")
     self.startRecBtn.connect("clicked", self.startRec)
+    self.loadExpBtn = gtk.Button("Load Experiment")
+    self.loadExpBtn.connect("clicked", self.loadExp)
+    self.saveExpBtn = gtk.Button("Save Experiment")
+    self.saveExpBtn.connect("clicked", self.saveExp)
+    self.randBtn = gtk.Button("Randomize")
+    self.randBtn.connect("clicked", self.randomize)
 
     # Text entry for new test
     self.filenameLabel = gtk.Label("Filename:")
@@ -56,7 +64,11 @@ class DelayApp(gtk.Window):
     # Layout
     self.hbox = gtk.HBox(spacing = 10)
     
-    self.vbox = gtk.VBox(spacing = 10)
+    self.lvbox = gtk.VBox(spacing = 10)
+    self.lvbox.pack_start(self.treeview)
+    self.lvbox.pack_start(self.randBtn)
+    
+    self.rvbox = gtk.VBox(spacing = 10)
     
     self.rhbox_1 = gtk.HBox(spacing = 10)
     self.rhbox_1.pack_start(self.filenameLabel)
@@ -68,12 +80,14 @@ class DelayApp(gtk.Window):
     self.rhbox_2.pack_start(self.subjectName)
     self.rhbox_2.pack_start(self.startExpBtn)
 
-    self.vbox.pack_start(self.rhbox_1)
-    self.vbox.pack_start(self.rhbox_2)
-    self.vbox.pack_start(self.stopRecBtn)
+    self.rvbox.pack_start(self.rhbox_1)
+    self.rvbox.pack_start(self.rhbox_2)
+    self.rvbox.pack_start(self.stopRecBtn)
+    self.rvbox.pack_start(self.saveExpBtn)
+    self.rvbox.pack_start(self.loadExpBtn)
 
-    self.hbox.pack_start(self.treeview) 
-    self.hbox.pack_start(self.vbox)
+    self.hbox.pack_start(self.lvbox) 
+    self.hbox.pack_start(self.rvbox)
 
     self.add(self.hbox)
 
@@ -90,21 +104,57 @@ class DelayApp(gtk.Window):
       self.tests[path][col] = float(new_text)
 
   def stopRec(self, widget):
+    time.sleep(.5)
     self.stopRecording = True
   
   def startRec(self, widget):
-    saveData(self.record(), "tests/" + self.filename.get_text())
+    saveData(self.record(), "stimuli/" + self.filename.get_text())
     print "Added", [self.filename.get_text(), .180]
     self.tests.append([self.filename.get_text(), .180])
     print "Saved test: " + self.filename.get_text()
 
   def startExp(self, widget):
-    for (filename, delay) in self.tests:
+    for i in range(len(self.tests)):
+      (filename, delay) = self.tests[i]
       playFile("tests/" + filename)
       saveData(self.recordAndPlayWithDelay(delay), 
-               "subjects/" + self.subjectName.get_text() + "-" + filename)
+               "subjects/" + self.subjectName.get_text() + "-" + str(i) + "-" + filename)
       print "Saved experiment results: " + \
-            "subjects/" + self.subjectName.get_text() + "-" + filename
+            "subjects/" + self.subjectName.get_text() + "-" + str(i) + "-" + filename
+
+  def saveExp(self, widget):
+    chooser = gtk.FileChooserDialog("Save...",
+                                    None,
+                                    gtk.FILE_CHOOSER_ACTION_SAVE,
+                                    (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL,
+                                     gtk.STOCK_OPEN, gtk.RESPONSE_OK))
+    chooser.run()
+    writer = csv.writer(open(chooser.get_filename(), 'wb'))
+    for pair in self.tests:
+      writer.writerow(pair)
+    chooser.destroy()
+    print "Saved experiment"
+  
+  def loadExp(self, widget):
+    chooser = gtk.FileChooserDialog("Load...",
+                                    None,
+                                    gtk.FILE_CHOOSER_ACTION_OPEN,
+                                    (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL,
+                                     gtk.STOCK_OPEN, gtk.RESPONSE_OK))
+    chooser.run()
+    reader = csv.reader(open(chooser.get_filename(), 'r'))
+    self.tests.clear()
+    for row in reader: 
+      if len(row) == 2:
+        self.tests.append([row[0], float(row[1])])
+#= [[row[0], float(row[1])] for row in reader if len(row) == 2] 
+
+    chooser.destroy()
+    print "Loaded experiment"
+
+  def randomize(self, widget):
+    x = range(len(self.tests)); random.shuffle(x);
+    self.tests.reorder(x)
 
   def record(self):
     stream = p.open(format = pyaudio.paInt16,
