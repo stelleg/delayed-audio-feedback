@@ -114,13 +114,11 @@ class DelayApp(gtk.Window):
     print "Saved test: " + self.filename.get_text()
 
   def startExp(self, widget):
-    outputs = set([])
     for i in range(len(self.tests)):
       (filename, delay) = self.tests[i]
       playFile("stimuli/" + filename)
       saveData(self.recordAndPlayWithDelay(delay), 
                "subjects/" + self.subjectName.get_text() + "-" + str(i + 1) + "-" + filename)
-      outputs.add([self.subjectName.get_text(), i + 1, filename]) 
       print "Saved experiment results: " + \
             "subjects/" + self.subjectName.get_text() + "-" + str(i + 1) + "-" + filename
 
