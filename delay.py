@@ -26,7 +26,7 @@ class DelayApp(gtk.Window):
     self.startExpBtn.connect("clicked", self.startExp)
     self.stopRecBtn = gtk.Button("Stop Recording")
     self.stopRecBtn.connect("clicked", self.stopRec)
-    self.startRecBtn = gtk.Button("Record New Test")
+    self.startRecBtn = gtk.Button("Record New Stimulus")
     self.startRecBtn.connect("clicked", self.startRec)
     self.loadExpBtn = gtk.Button("Load Experiment")
     self.loadExpBtn.connect("clicked", self.loadExp)
@@ -35,7 +35,7 @@ class DelayApp(gtk.Window):
     self.randBtn = gtk.Button("Randomize")
     self.randBtn.connect("clicked", self.randomize)
 
-    # Text entry for new test
+    # Text entry for new stimuli 
     self.filenameLabel = gtk.Label("Filename:")
     self.filename = gtk.Entry()
 
@@ -114,13 +114,15 @@ class DelayApp(gtk.Window):
     print "Saved test: " + self.filename.get_text()
 
   def startExp(self, widget):
+    outputs = set([])
     for i in range(len(self.tests)):
       (filename, delay) = self.tests[i]
-      playFile("tests/" + filename)
+      playFile("stimuli/" + filename)
       saveData(self.recordAndPlayWithDelay(delay), 
-               "subjects/" + self.subjectName.get_text() + "-" + str(i) + "-" + filename)
+               "subjects/" + self.subjectName.get_text() + "-" + str(i + 1) + "-" + filename)
+      outputs.add([self.subjectName.get_text(), i + 1, filename]) 
       print "Saved experiment results: " + \
-            "subjects/" + self.subjectName.get_text() + "-" + str(i) + "-" + filename
+            "subjects/" + self.subjectName.get_text() + "-" + str(i + 1) + "-" + filename
 
   def saveExp(self, widget):
     chooser = gtk.FileChooserDialog("Save...",
