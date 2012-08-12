@@ -104,7 +104,7 @@ class DelayApp(gtk.Window):
       self.tests[path][col] = float(new_text)
 
   def stopRec(self, widget):
-    time.sleep(.5)
+    time.sleep(1)
     self.stopRecording = True
   
   def startRec(self, widget):
