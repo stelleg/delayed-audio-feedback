@@ -104,7 +104,6 @@ class DelayApp(gtk.Window):
       self.tests[path][col] = float(new_text)
 
   def stopRec(self, widget):
-    time.sleep(1)
     self.stopRecording = True
   
   def startRec(self, widget):
@@ -165,11 +164,13 @@ class DelayApp(gtk.Window):
 
     recording = []
     startTime = time.time()
-    self.stopRecording = False 
     while self.stopRecording == False:
+      x = 10
       data = stream.read(chunk)
       recording.append(data)
       gtk.main_iteration(block=False)
+
+
 
     stream.close()
     return ''.join(recording) 
@@ -184,15 +185,25 @@ class DelayApp(gtk.Window):
     recording = []
     q = deque([])
     
-    self.stopRecording = False
-    while self.stopRecording == False:
+    self.stopRecording = False; finishing = False; record = True
+    while record:
       data = stream.read(chunk)
       q.append((time.time(), data))
+      
       if time.time() - q[0][0] > delay:
         recording.append(q[0][1])
         stream.write(q.popleft()[1])
+      
+      # Add delay at end to prevent cutoff
+      if self.stopRecording and not finishing:
+        pressTime = time.time()
+        self.stopRecording = False
+        finishing = True 
+      if finishing:
+        record = time.time() < pressTime + 1
+      
       gtk.main_iteration(block=False)
-
+      
     stream.close()
     return ''.join(recording)
 
